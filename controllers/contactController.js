@@ -1,41 +1,74 @@
+const asyncHandler = require("express-async-handler");
+const Contact = require("../models/contactModel");
+
 //@Description Get all contacts
 //@Route GET /api/contacts
 //@Access Public
-const getContacts = async (req,res)=>{
-    res.status(200).send("Get All contacts");
-}
+const getContacts = asyncHandler(async (req,res)=>{
+    const contacts = await Contact.find();
+    res.status(200).send(contacts);
+});
 
-//@Description Create a contact
+//@Description Add a contact
 //@Route POST /api/contacts
 //@Access Public
-const createContact = async (req,res)=>{
+const createContact = asyncHandler(async (req,res)=>{
     console.log(req.body);
     const {name, email, phone} = req.body;
     if(!name || !email || !phone) {
         res.status(400);
         throw new Error("All fields are Mandetory !");
     }
-    res.status(201).send("Created Contact");
-}
 
-//@Description Create a contact
-//@Route POST /api/contacts
-//@Access Public
-const updateContact = async (req,res)=>{
-    res.status(200).send(`Updated Contact: ${req.params.id}`);
-}
+    const contact = await Contact.create({
+        name, 
+        email, 
+        phone
+    })
+    res.status(201).send(contact);
+});
 
-//@Description Create a contact
-//@Route POST /api/contacts
+//@Description Find a contact
+//@Route POST /api/contacts/:id
 //@Access Public
-const deleteContact = async (req,res)=>{
-    res.status(200).send(`Deleted Contact: ${req.params.id}`);
-}
+const getContact = asyncHandler(async (req,res)=>{
+    const contact = await Contact.findById(req.params.id);
+    if(!contact) {
+        res.status(404);
+        throw new Error("Contact Not Found");
+    }
+    res.status(200).json(contact);
+});
 
-//@Description Create a contact
-//@Route POST /api/contacts
+//@Description Update a contact
+//@Route POST /api/contacts/:id
 //@Access Public
-const getContact = async (req,res)=>{
-    res.status(200).send(`Fetched Contact: ${req.params.id}`);
-}
+const updateContact = asyncHandler(async (req,res)=>{
+    const contact = Contact.findById(req.params.id);
+    if(!contact) {
+        res.status(404);
+        throw new Error("Contact Not Found");
+    }
+    const updatedContact = await Contact.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {new : true}
+    )
+
+    res.status(200).json(updatedContact);
+});
+
+//@Description Deletee a contact
+//@Route DELETE /api/contacts/:id
+//@Access Public
+const deleteContact = asyncHandler(async (req,res)=>{
+    const contact = await Contact.findById(req.params.id);
+    if(!contact) {
+        res.status(404);
+        throw new Error("Contact not Found");
+    }
+    await Contact.deleteOne();
+    res.status(200).json({contact, message: "Contact Deleted"});
+});
+
 module.exports = {getContacts, createContact, updateContact, deleteContact, getContact};
